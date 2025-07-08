@@ -8,7 +8,10 @@ from google.oauth2.service_account import Credentials
 scope = ["https://www.googleapis.com/auth/spreadsheets"]
 creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
 client = gspread.authorize(creds)
-sheet = client.open("ESUAE_Attendance").sheet1  # Ensure this matches your Google Sheet name
+
+# ✅ OPEN SHEET BY URL (your shared link)
+sheet_url = "https://docs.google.com/spreadsheets/d/1CF3KJBtkwYC0g8oP4FOCrwfTwAESVoADgFa8aFyiKE0/edit?gid=0"
+sheet = client.open_by_url(sheet_url).sheet1
 
 # 🚀 App Setup
 st.set_page_config(page_title="ESUAE Attendance Register")
@@ -63,9 +66,6 @@ if st.button("💾 Save Attendance"):
         [str(selected_date), selected_sport, athlete, st.session_state.attendance[athlete]["status"]]
         for athlete in filtered_athletes
     ]
+    sheet.append_rows(new_records)
+    st.success("✅ Attendance saved to Google Sheets!")
 
-    try:
-        sheet.append_rows(new_records, value_input_option="USER_ENTERED")
-        st.success("✅ Attendance saved to Google Sheets!")
-    except Exception as e:
-        st.error(f"❌ Failed to save attendance: {e}")
