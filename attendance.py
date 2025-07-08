@@ -1,48 +1,41 @@
 import streamlit as st
 import pandas as pd
 from datetime import date
-from io import BytesIO
+import gspread
+from google.oauth2.service_account import Credentials
 
-# -------------------------------
-# ✅ App setup
-# -------------------------------
+# 🛠 Google Sheets Setup
+scope = ["https://www.googleapis.com/auth/spreadsheets"]
+creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
+client = gspread.authorize(creds)
+sheet = client.open("ESUAE_Attendance").sheet1  # Name must match Google Sheet
+
+# 🚀 App Setup
 st.set_page_config(page_title="ESUAE Attendance Register")
 st.title("📘 ESUAE Attendance Register")
 
-st.write("👋 App started...")
-
-# -------------------------------
-# ✅ Load athlete data
-# -------------------------------
+# 📥 Load athlete data
 try:
     athlete_df = pd.read_excel("Ballers_athletes.xlsx")
-    st.write("✅ Excel file loaded successfully")
+    st.write("✅ Excel file loaded")
 except Exception as e:
-    st.error(f"❌ Failed to load Excel file: {e}")
+    st.error(f"❌ Could not load Excel file: {e}")
     st.stop()
 
 athlete_df.columns = athlete_df.columns.str.strip()
 
-# -------------------------------
-# ✅ Session state setup
-# -------------------------------
+# 🧠 Session State
 if "attendance" not in st.session_state:
     st.session_state.attendance = {}
 
-# -------------------------------
-# 🗓 Step 1: Select Date
-# -------------------------------
+# 📅 Date Input
 selected_date = st.date_input("📅 Select date for attendance", date.today())
 
-# -------------------------------
-# 🏅 Step 2: Select Sport
-# -------------------------------
+# 🏅 Sport Selection
 sports = athlete_df["Sport"].unique()
 selected_sport = st.selectbox("🏅 Select sport", sports)
 
-# -------------------------------
-# 👥 Step 3: Athlete checkboxes
-# -------------------------------
+# ✅ Athlete Selection
 filtered_athletes = athlete_df[athlete_df["Sport"] == selected_sport]["Athlete list"].tolist()
 st.write("👥 **Mark Attendance**")
 
@@ -64,30 +57,11 @@ for athlete in filtered_athletes:
         else:
             st.session_state.attendance[athlete] = {"present": True, "status": "Present"}
 
-# -------------------------------
-# 💾 Step 4: Save & Download
-# -------------------------------
+# 💾 Save to Google Sheets
 if st.button("💾 Save Attendance"):
     new_records = [
-        {
-            "Date": selected_date,
-            "Sport": selected_sport,
-            "Athlete": athlete,
-            "Status": st.session_state.attendance[athlete]["status"]
-        }
+        [str(selected_date), selected_sport, athlete, st.session_state.attendance[athlete]["status"]]
         for athlete in filtered_athletes
     ]
-
-    new_df = pd.DataFrame(new_records)
-
-    # Convert to Excel in memory
-    output = BytesIO()
-    new_df.to_excel(output, index=False)
-
-    st.success("✅ Attendance file created successfully")
-    st.download_button(
-        label="📥 Download Attendance File",
-        data=output.getvalue(),
-        file_name=f"attendance_{selected_date}.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+    sheet.append_rows(new_records)
+    st.success("✅ Attendance saved to Google Sheets!")
