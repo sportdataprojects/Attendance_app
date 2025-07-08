@@ -9,7 +9,8 @@ st.set_page_config(page_title="ESUAE Attendance Register")
 st.title("📘 ESUAE Attendance Register")
 
 # Load athlete data
-athlete_df = pd.read_excel(r""C:\Users\User\OneDrive - General Authority of sports\For ALL\Documents\Data Management\Apps\Attendance\Ballers_athletes.xlsx") # adjust path as needed
+athlete_df = pd.read_excel("Ballers_athletes.xlsx")
+ # adjust path as needed
 athlete_df.columns = athlete_df.columns.str.strip()
 
 # Initialize session state
