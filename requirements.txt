@@ -1,1 +1,1 @@
-streamlit==1.35.0pandas==2.2.2numpy==1.26.4openpyxl==3.1.2altair==5.3.0validators==0.28.3
+streamlitpandasnumpyopenpyxlaltairvalidators
