@@ -1,33 +1,49 @@
 import streamlit as st
 import pandas as pd
 from datetime import date
-import os
+from io import BytesIO
 
-
-# App Title
+# -------------------------------
+# ✅ App setup
+# -------------------------------
 st.set_page_config(page_title="ESUAE Attendance Register")
 st.title("📘 ESUAE Attendance Register")
 
-# Load athlete data
-athlete_df = pd.read_excel("Ballers_athletes.xlsx")
- # adjust path as needed
+st.write("👋 App started...")
+
+# -------------------------------
+# ✅ Load athlete data
+# -------------------------------
+try:
+    athlete_df = pd.read_excel("Ballers_athletes.xlsx")
+    st.write("✅ Excel file loaded successfully")
+except Exception as e:
+    st.error(f"❌ Failed to load Excel file: {e}")
+    st.stop()
+
 athlete_df.columns = athlete_df.columns.str.strip()
 
-# Initialize session state
+# -------------------------------
+# ✅ Session state setup
+# -------------------------------
 if "attendance" not in st.session_state:
     st.session_state.attendance = {}
 
-# Step 1: Select Date
+# -------------------------------
+# 🗓 Step 1: Select Date
+# -------------------------------
 selected_date = st.date_input("📅 Select date for attendance", date.today())
 
-# Step 2: Select Sport
+# -------------------------------
+# 🏅 Step 2: Select Sport
+# -------------------------------
 sports = athlete_df["Sport"].unique()
 selected_sport = st.selectbox("🏅 Select sport", sports)
 
-# Step 3: Get list of athletes
+# -------------------------------
+# 👥 Step 3: Athlete checkboxes
+# -------------------------------
 filtered_athletes = athlete_df[athlete_df["Sport"] == selected_sport]["Athlete list"].tolist()
-
-# Step 4: Loop through each athlete with checkbox + optional dropdown
 st.write("👥 **Mark Attendance**")
 
 for athlete in filtered_athletes:
@@ -48,9 +64,10 @@ for athlete in filtered_athletes:
         else:
             st.session_state.attendance[athlete] = {"present": True, "status": "Present"}
 
-# Step 5: Save Attendance
+# -------------------------------
+# 💾 Step 4: Save & Download
+# -------------------------------
 if st.button("💾 Save Attendance"):
-    # Prepare records
     new_records = [
         {
             "Date": selected_date,
@@ -63,19 +80,14 @@ if st.button("💾 Save Attendance"):
 
     new_df = pd.DataFrame(new_records)
 
-    # Save path – change this if needed
-    output_path = r"C:\Users\User\OneDrive - General Authority of sports\For ALL\Documents\Data Management\Attendance"
-    output_file = os.path.join(output_path, "attendance_record.xlsx")
+    # Convert to Excel in memory
+    output = BytesIO()
+    new_df.to_excel(output, index=False)
 
-    # Ensure the folder exists (optional but safe)
-    os.makedirs(output_path, exist_ok=True)
-
-    # Append to or create the file
-    if os.path.exists(output_file):
-        existing_df = pd.read_excel(output_file)
-        updated_df = pd.concat([existing_df, new_df], ignore_index=True)
-    else:
-        updated_df = new_df
-
-    updated_df.to_excel(output_file, index=False)
-    st.success(f"✅ Attendance saved to: {output_file}")
+    st.success("✅ Attendance file created successfully")
+    st.download_button(
+        label="📥 Download Attendance File",
+        data=output.getvalue(),
+        file_name=f"attendance_{selected_date}.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
