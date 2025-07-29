@@ -53,7 +53,7 @@ for athlete in filtered_athletes:
         if not present:
             status = st.selectbox(
                 "Reason",
-                ["Unknown", "Work Commitment", "School Commitment", "Family Commitment", "Injury", "Illness", "Sport Training", "Competition", "Misc", "Remote Training", "Non-Training Day"],
+                ["Unknown", "Work Commitment", "School Commitment", "Family Commitment", "Injury", "Illness", "Sport Training", "Competition", "Misc"],
                 key=f"{athlete}_dropdown"
             )
             st.session_state.attendance[athlete] = {"present": False, "status": status}
